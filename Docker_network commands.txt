@@ -1,0 +1,142 @@
+[ec2-user@ip-172-31-44-171 ~]$ docker network ls
+NETWORK ID     NAME      DRIVER    SCOPE
+2eddbdae2c18   bridge    bridge    local
+4124720a5577   host      host      local
+32e5678264ce   none      null      local
+[ec2-user@ip-172-31-44-171 ~]$ docker network create --driver overlay my_bridge_network
+Error response from daemon: This node is not a swarm manager. Use "docker swarm init" or "docker swarm join" to connect this node to swarm and try again.
+[ec2-user@ip-172-31-44-171 ~]$ docker swarm init
+Swarm initialized: current node (mgjwnvxniq2tldkns5m97582o) is now a manager.
+
+To add a worker to this swarm, run the following command:
+
+    docker swarm join --token SWMTKN-1-67amw6maskakedy8gbvxmqqn8o9xsz4m47pmuuavjj2n4yez68-btcu3li35inqtruza6j9wpo38 172.31.44.171:2377
+
+To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+
+[ec2-user@ip-172-31-44-171 ~]$ docker swarm join
+"docker swarm join" requires exactly 1 argument.
+See 'docker swarm join --help'.
+
+Usage:  docker swarm join [OPTIONS] HOST:PORT
+
+Join a swarm as a node and/or manager
+[ec2-user@ip-172-31-44-171 ~]$ docker swarm join nginx:80
+Error response from daemon: This node is already part of a swarm. Use "docker swarm leave" to leave this swarm and join another one.
+[ec2-user@ip-172-31-44-171 ~]$ docker swarm join
+"docker swarm join" requires exactly 1 argument.
+See 'docker swarm join --help'.
+
+Usage:  docker swarm join [OPTIONS] HOST:PORT
+
+Join a swarm as a node and/or manager
+[ec2-user@ip-172-31-44-171 ~]$ docker swarm join --help
+
+Usage:  docker swarm join [OPTIONS] HOST:PORT
+
+Join a swarm as a node and/or manager
+
+Options:
+      --advertise-addr string   Advertised address (format: "<ip|interface>[:port]")
+      --availability string     Availability of the node ("active", "pause", "drain") (default "active")
+      --data-path-addr string   Address or interface to use for data path traffic (format: "<ip|interface>")
+      --listen-addr node-addr   Listen address (format: "<ip|interface>[:port]") (default 0.0.0.0:2377)
+      --token string            Token for entry into the swarm
+[ec2-user@ip-172-31-44-171 ~]$ docker network create my_network
+b94a6ec6d42685a8e03879d2d540121bc2df1f7bb77756edf9be9f59e53eef2d
+[ec2-user@ip-172-31-44-171 ~]$ docker network inspect my_network
+[
+    {
+        "Name": "my_network",
+        "Id": "b94a6ec6d42685a8e03879d2d540121bc2df1f7bb77756edf9be9f59e53eef2d",
+        "Created": "2024-10-12T05:19:47.960046427Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.19.0.0/16",
+                    "Gateway": "172.19.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {},
+        "Options": {},
+        "Labels": {}
+    }
+]
+[ec2-user@ip-172-31-44-171 ~]$ docker network connect my_network my_container
+[ec2-user@ip-172-31-44-171 ~]$ docker ps -a
+CONTAINER ID   IMAGE     COMMAND                  CREATED             STATUS             PORTS      NAMES
+2b5588ad4de8   nginx     "/docker-entrypoint.…"   25 minutes ago      Up 25 minutes      80/tcp     my_container
+9b977d99ea4a   tomcat    "catalina.sh run"        About an hour ago   Up About an hour   8080/tcp   objective_archimedes
+3315b5059959   nginx     "/docker-entrypoint.…"   2 hours ago         Up 2 hours         80/tcp     sharp_moore
+[ec2-user@ip-172-31-44-171 ~]$ docker network connect my_network 3315b5059959
+[ec2-user@ip-172-31-44-171 ~]$ docker network inspect my_network
+[
+    {
+        "Name": "my_network",
+        "Id": "b94a6ec6d42685a8e03879d2d540121bc2df1f7bb77756edf9be9f59e53eef2d",
+        "Created": "2024-10-12T05:19:47.960046427Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.19.0.0/16",
+                    "Gateway": "172.19.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {
+            "2b5588ad4de84d0231a5770cb9219ef99b8ecaad2a2ed67e2671b5a832a05400": {
+                "Name": "my_container",
+                "EndpointID": "c4eb3538e7ec5f016904c6cf49c6cb01ee905ebc018ec6596837eccaf04fe5e6",
+                "MacAddress": "02:42:ac:13:00:02",
+                "IPv4Address": "172.19.0.2/16",
+                "IPv6Address": ""
+            },
+            "3315b5059959cc5ea45804a1d525cf3862120544a90c24c3da64970da3614b70": {
+                "Name": "sharp_moore",
+                "EndpointID": "42e0b8f553d64ab92538d9bf847a085dbe3adadf2f9c06f3c62a3a3d83d45fb1",
+                "MacAddress": "02:42:ac:13:00:03",
+                "IPv4Address": "172.19.0.3/16",
+                "IPv6Address": ""
+            }
+        },
+        "Options": {},
+        "Labels": {}
+    }
+]
+[ec2-user@ip-172-31-44-171 ~]$ docker network prune
+WARNING! This will remove all custom networks not used by at least one container.
+Are you sure you want to continue? [y/N] y
+[ec2-user@ip-172-31-44-171 ~]$ docker network ls
+NETWORK ID     NAME              DRIVER    SCOPE
+2eddbdae2c18   bridge            bridge    local
+537626f2c2b5   docker_gwbridge   bridge    local
+4124720a5577   host              host      local
+ptue14waoqvr   ingress           overlay   swarm
+b94a6ec6d426   my_network        bridge    local
+32e5678264ce   none              null      local
+[ec2-user@ip-172-31-44-171 ~]$ 
